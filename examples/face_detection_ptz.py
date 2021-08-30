@@ -10,10 +10,11 @@ import numpy as np
 cpx_old = True
 end = 0
 w_calibration, h_calibration = 1527, 833
+# w_calibration, h_calibration = 1600, 900
 mid_x, mid_y = w_calibration/2, h_calibration/2
 point_flag = False
 lock = threading.Lock()
-sigmaX, sigmaA = 0.01, 0.015
+sigmaX, sigmaA = 0.01, 0.0155
 dt = 1/20
 k_x, k_y = w_calibration/2, h_calibration/2
 startX, startY, endX, endY = 0, 0, 0, 0
@@ -57,6 +58,7 @@ def goto_human():
     global point_flag,predict_x,predict_y,cpx, cpy
     angle_of_x_old, angle_of_y_old = 0, 0
     pp, tp = 0, 0
+    pan=0
     predict_x_old = 0
     start = time.time()
 
@@ -65,7 +67,7 @@ def goto_human():
         if point_flag:
             print('working')
 
-            if np.abs(predict_x-predict_x_old) > 500:
+            if np.abs(pan-angle_of_x_old) > 500:
                 moveTo(int(pan*100),int(tilt*100),0,0)
 
             else:
@@ -77,8 +79,8 @@ def goto_human():
                 # TO CALCULATE OF MOTOR SPEED
                 end = 0.01
                 # print(np.abs(pan-angle_of_x_old))
-                angular_speed_x, angular_speed_y = round((np.abs(pan-angle_of_x_old)/end)*0.45,3),\
-                                                   round((np.abs(tilt-angle_of_y_old)/end)*0.2,3) # 각속도 계산
+                angular_speed_x, angular_speed_y = round((np.abs(pan-angle_of_x_old)/end)*0.4,3),\
+                                                   round((np.abs(tilt-angle_of_y_old)/end)*0.3,3) # 각속도 계산
                 #
                 pp, tp = int(0.825 * np.abs(angular_speed_x) + 0.127), int(0.825 * np.abs(angular_speed_y) + 0.127)
 
@@ -93,15 +95,20 @@ def goto_human():
 
                 if pan < 0:
                     if tilt > 0:
-                        move_pan_tilt('right', 'up', pp, int(tp/10))
+                        move_pan_tilt('right', 'up', int(pp/2), int(tp/10))
                     else:
-                        move_pan_tilt('right', 'down', pp, int(tp/10))
+                        move_pan_tilt('right', 'down', int(pp/2), int(tp/10))
 
                 elif pan > 0:
                     if tilt > 0:
-                        move_pan_tilt('left', 'up', pp, int(tp/10))
+                        move_pan_tilt('left', 'up', int(pp/2), int(tp/10))
                     else:
-                        move_pan_tilt('left', 'down', pp, int(tp/10))
+                        move_pan_tilt('left', 'down', int(pp/2), int(tp/10))
+
+                elif np.abs(pan- w_calibration/2)>20:
+                    moveTo(int(pan*100),int(tilt*100),0,0)
+                    print('stop')
+
                 angle_of_x_old, angle_of_y_old = pan, tilt
 
         lock.release()
@@ -112,12 +119,12 @@ if __name__ == '__main__':
     vcap = initialize() # 화면을 받아옴.
     on_screen_display()
     time.sleep(0.3)
-    # fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-    # fps = 25
+    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+    fps = 25
+    out = cv2.VideoWriter('save_video/얼굴 탐지.avi', fourcc, fps, (1527, 833))
+    i = 1
     pre_time = time.time()
     fps_data = []
-    i = 1
-    # out = cv2.VideoWriter('save_video/얼굴 탐지.avi', fourcc, fps, (1527, 833))
 
     # -------------------------처음 이미지 받아오기---------------------------------------------
     ret_val, image = vcap.read()
@@ -143,6 +150,7 @@ if __name__ == '__main__':
 
             if i == 1:
                 goto_origin(pp,ps,tp,ts)
+                time.sleep(0.3)
                 i = 2
 
             now_time = time.time()
@@ -179,15 +187,16 @@ if __name__ == '__main__':
             # display output
             frame = cv2.putText(frame, "FPS: %3.1f" % (fps), (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             frame = cv2.imshow("Real-time face detection", frame)
-            # out.write(video)
+            out.write(video)
             #
             # press "Q" to stop
             if cv2.waitKey(1) == 27:
                 goto_origin(pp,ps,tp,ts)
+                time.sleep(0.3)
                 break
 
 
     # release resources
-    # out.release()
+    out.release()
     vcap.release()
     cv2.destroyAllWindows()
