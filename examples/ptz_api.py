@@ -45,6 +45,12 @@ def goto_origin(pp,ps,tp,ts): # 원점으로 가요
 
 def move_pan_tilt(_pan,_tilt,pan_speed,tilt_speed): # moving same time pan, tilt
     
+    if tilt_speed > 3000:
+        tilt_speed = 3000
+
+    if pan_speed > 3000:
+        pan_speed = 3000
+
     if _pan == 'right' or _pan =='left':
         device = 'pan'
     # elif _pan == 'stop':

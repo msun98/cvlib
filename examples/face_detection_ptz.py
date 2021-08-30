@@ -77,7 +77,7 @@ def goto_human():
                 # TO CALCULATE OF MOTOR SPEED
                 end = 0.01
                 # print(np.abs(pan-angle_of_x_old))
-                angular_speed_x, angular_speed_y = round((np.abs(pan-angle_of_x_old)/end)*0.2,3),\
+                angular_speed_x, angular_speed_y = round((np.abs(pan-angle_of_x_old)/end)*0.45,3),\
                                                    round((np.abs(tilt-angle_of_y_old)/end)*0.2,3) # 각속도 계산
                 #
                 pp, tp = int(0.825 * np.abs(angular_speed_x) + 0.127), int(0.825 * np.abs(angular_speed_y) + 0.127)
@@ -93,15 +93,15 @@ def goto_human():
 
                 if pan < 0:
                     if tilt > 0:
-                        move_pan_tilt('right', 'up', pp, int(tp/20))
+                        move_pan_tilt('right', 'up', pp, int(tp/10))
                     else:
-                        move_pan_tilt('right', 'down', pp, int(tp/20))
+                        move_pan_tilt('right', 'down', pp, int(tp/10))
 
                 elif pan > 0:
                     if tilt > 0:
-                        move_pan_tilt('left', 'up', pp, int(tp/20))
+                        move_pan_tilt('left', 'up', pp, int(tp/10))
                     else:
-                        move_pan_tilt('left', 'down', pp, int(tp/20))
+                        move_pan_tilt('left', 'down', pp, int(tp/10))
                 angle_of_x_old, angle_of_y_old = pan, tilt
 
         lock.release()
@@ -116,6 +116,7 @@ if __name__ == '__main__':
     # fps = 25
     pre_time = time.time()
     fps_data = []
+    i = 1
     # out = cv2.VideoWriter('save_video/얼굴 탐지.avi', fourcc, fps, (1527, 833))
 
     # -------------------------처음 이미지 받아오기---------------------------------------------
@@ -127,7 +128,7 @@ if __name__ == '__main__':
     initial_position = get_position()
     if initial_position != (0, 0, 0):
         goto_origin(pp,ps,tp,ts)
-        time.sleep(0.3)
+        # time.sleep(0.3)
         
     human = threading.Thread(target=goto_human)
     human.daemon = True  # 프로그램 종료시 즉시 종료.
@@ -139,6 +140,10 @@ if __name__ == '__main__':
             status, image = vcap.read()
             if not status:
                 break
+
+            if i == 1:
+                goto_origin(pp,ps,tp,ts)
+                i = 2
 
             now_time = time.time()
             delta = now_time - pre_time
@@ -157,7 +162,7 @@ if __name__ == '__main__':
                 point_flag = True
                 startX, startY = f[0], f[1]
                 endX, endY = f[2], f[3]
-                cx, cy = int((startX+endX)/2), int((startY+endY)/2)
+                cx, cy = int((startX+endX)/2), endY
 
                 # for drawing figure in face
                 video = cv2.circle(video, (cx, cy), 8, (255, 0, 0), -1)
